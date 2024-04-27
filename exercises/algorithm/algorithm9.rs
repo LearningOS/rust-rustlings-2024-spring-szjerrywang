@@ -1,11 +1,11 @@
 /*
-	heap
-	This question requires you to implement a binary heap function
+    heap
+    This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
 use std::default::Default;
+use std::mem::swap;
 
 pub struct Heap<T>
 where
@@ -23,7 +23,7 @@ where
     pub fn new(comparator: fn(&T, &T) -> bool) -> Self {
         Self {
             count: 0,
-            items: vec![T::default()],
+            items: vec![],
             comparator,
         }
     }
@@ -37,11 +37,25 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count += 1;
+
+        let mut idx = self.count - 1;
+        let mut parent_idx = self.parent_idx(idx);
+
+        while idx != 0 && (self.comparator)(&self.items[idx], &self.items[parent_idx]) {
+            self.items.swap(parent_idx, idx);
+            idx = self.parent_idx(idx);
+            parent_idx = self.parent_idx(idx);
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
-        idx / 2
+        if (idx == 0) {
+            0
+        } else {
+            (idx - 1) / 2
+        }
     }
 
     fn children_present(&self, idx: usize) -> bool {
@@ -49,7 +63,7 @@ where
     }
 
     fn left_child_idx(&self, idx: usize) -> usize {
-        idx * 2
+        idx * 2 + 1
     }
 
     fn right_child_idx(&self, idx: usize) -> usize {
@@ -57,8 +71,16 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left = self.left_child_idx(idx);
+        let right = self.right_child_idx(idx);
+        let mut smallest = idx;
+        if left < self.count && (self.comparator)(&self.items[left], &self.items[smallest]) {
+            smallest = left;
+        }
+        if right < self.count && (self.comparator)(&self.items[right], &self.items[smallest]) {
+            smallest = right;
+        }
+        smallest
     }
 }
 
@@ -84,8 +106,26 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.is_empty() {
+            None
+        } else {
+            if (self.len() == 1) {
+                self.count -= 1;
+                self.items.pop()
+            } else {
+                let root = self.items.swap_remove(0);
+                self.count -= 1;
+
+                let mut current = 0;
+                let mut smallest = self.smallest_child_idx(0);
+                while (smallest != current) {
+                    self.items.swap(smallest, current);
+                    current = smallest;
+                    smallest = self.smallest_child_idx(current);
+                }
+                Some(root)
+            }
+        }
     }
 }
 
@@ -152,3 +192,4 @@ mod tests {
         assert_eq!(heap.next(), Some(2));
     }
 }
+
